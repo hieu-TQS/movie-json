@@ -40,7 +40,7 @@
             "id": "phimhdcs",
             "name": "PhimHDCSS",
             "version": "1.1.3",
-            "scriptUrl": "https://raw.githubusercontent.com/hieu-TQS/movie-json/refs/heads/main/phimdcs.js",
+            "scriptUrl": "https://raw.githubusercontent.com/hieu-TQS/movie-json/refs/heads/main/phimhdcs.js",
             "iconUrl": "https://phimhdcss.com/favicon.ico"
         },
         {
@@ -110,7 +110,7 @@
             "id": "vlxx",
             "name": "VLXX",
             "version": "1.0.4",
-            "scriptUrl": "https://raw.githubusercontent.com/hieu-TQS/movie-json/refs/heads/main/vlxm.js",
+            "scriptUrl": "https://raw.githubusercontent.com/hieu-TQS/movie-json/refs/heads/main/vlx.js",
             "iconUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/vlxx.ico"
         },
         {
