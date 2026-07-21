@@ -4,21 +4,21 @@
         {
             "id": "ophim",
             "name": "OPhim",
-            "version": "1.0.4",
+            "version": "v2.0",
             "scriptUrl": "https://raw.githubusercontent.com/hieu-TQS/movie-json/refs/heads/main/ophim.js",
             "iconUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/ophim.ico"
         },
         {
             "id": "kkphim",
             "name": "KKPhim",
-            "version": "1.0.2",
+            "version": "v2.0",
             "scriptUrl": "https://raw.githubusercontent.com/hieu-TQS/movie-json/refs/heads/main/kkphim.js",
             "iconUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/kkphim.png"
         },
         {
             "id": "nguonc",
             "name": "Phim NguonC",
-            "version": "1.1.5",
+            "version": "v2.0",
             "scriptUrl": "https://raw.githubusercontent.com/hieu-TQS/movie-json/refs/heads/main/nguonc.js",
             "iconUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/nguonC.png"
         },
