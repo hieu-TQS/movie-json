@@ -25,6 +25,7 @@ function getManifest() {
 
 function getHomeSections() {
     return JSON.stringify([
+        { slug: 'home', title: '🏠 Trang Chủ', type: 'Grid', path: 'home' },
         { slug: 'phim-moi', title: 'Phim Mới Cập Nhật', type: 'Grid', path: 'danh-sach' },
         { slug: 'phim-bo', title: 'Phim Bộ', type: 'Horizontal', path: 'danh-sach' },
         { slug: 'phim-le', title: 'Phim Lẻ', type: 'Horizontal', path: 'danh-sach' },
@@ -71,7 +72,7 @@ function getFilterConfig() {
 var BASE_API = "https://ophim1.com/v1/api";
 
 var MAIN_SLUGS = [
-    'phim-le', 'phim-bo', 'hoat-hinh', 'tv-shows',
+    'home', 'phim-le', 'phim-bo', 'hoat-hinh', 'tv-shows',
     'phim-chieu-rap', 'phim-moi', 'sap-chieu',
     'phim-vietsub', 'phim-thuyet-minh', 'phim-long-tien',
     'phim-bo-dang-chieu', 'phim-bo-hoan-thanh', 'subteam'
@@ -82,6 +83,12 @@ function getUrlList(slug, filtersJson) {
         var filters = JSON.parse(filtersJson || "{}");
         var page = filters.page || 1;
         var limit = filters.limit || 24;
+
+        // TRANG CHỦ: dùng API home để có nội dung thật
+        if (slug === 'home') {
+            return BASE_API + "/home";
+        }
+
         var finalPath = "";
 
         // Ưu tiên: year > category > country > slug
