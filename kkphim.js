@@ -25,6 +25,7 @@ function getManifest() {
 
 function getHomeSections() {
     return JSON.stringify([
+        { slug: 'home', title: '🏠 Trang Chủ', type: 'Grid', path: 'home' },
         { slug: 'phim-moi-cap-nhat-v3', title: 'Phim Mới Cập Nhật', type: 'Grid', path: 'danh-sach' },
         { slug: 'phim-bo', title: 'Phim Bộ', type: 'Horizontal', path: 'danh-sach' },
         { slug: 'phim-le', title: 'Phim Lẻ', type: 'Horizontal', path: 'danh-sach' },
@@ -69,7 +70,7 @@ function getFilterConfig() {
 var BASE_API = "https://phimapi.com";
 
 var LIST_SLUGS = [
-    'phim-vietsub', 'subteam', 'phim-thuyet-minh', 'phim-long-tieng',
+    'home', 'phim-vietsub', 'subteam', 'phim-thuyet-minh', 'phim-long-tieng',
     'phim-bo', 'phim-le', 'hoat-hinh', 'tv-shows', 'phim-chieu-rap',
     'phim-moi-cap-nhat', 'phim-moi-cap-nhat-v3'
 ];
@@ -79,6 +80,11 @@ function getUrlList(slug, filtersJson) {
         var filters = JSON.parse(filtersJson || "{}");
         var page = filters.page || 1;
         var limit = filters.limit || 24;
+
+        // TRANG CHỦ: dùng API home để có nội dung thật
+        if (slug === 'home') {
+            return BASE_API + "/v1/api/home";
+        }
 
         var typeList = slug;
         if (typeList === 'phim-moi') typeList = 'phim-moi-cap-nhat-v3';
