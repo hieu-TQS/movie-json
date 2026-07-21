@@ -26,6 +26,7 @@ function getManifest() {
 
 function getHomeSections() {
     return JSON.stringify([
+        { slug: 'home', title: '🏠 Trang Chủ', type: 'Grid', path: 'home' },
         { slug: 'phim-moi-cap-nhat', title: 'Phim Mới Cập Nhật', type: 'Grid', path: 'phim-moi-cap-nhat' },
         { slug: 'phim-bo', title: 'Phim Bộ', type: 'Horizontal', path: 'danh-sach' },
         { slug: 'phim-le', title: 'Phim Lẻ', type: 'Horizontal', path: 'danh-sach' },
@@ -73,6 +74,11 @@ function getUrlList(slug, filtersJson) {
         var filters = JSON.parse(filtersJson || "{}");
         var page = filters.page || 1;
         var sort = filters.sort || "modified.time";
+
+        // TRANG CHỦ: dùng API phim-moi-cap-nhat làm nội dung mặc định
+        if (slug === 'home') {
+            return BASE_API + "/films/phim-moi-cap-nhat?page=" + page;
+        }
 
         // Phim Mới Cập Nhật (không filter)
         if (slug === 'phim-moi-cap-nhat' && !filters.category && !filters.country && !filters.year) {
