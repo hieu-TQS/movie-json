@@ -1,3 +1,12 @@
+//
+// =============================================================================
+// KKPHIM PLUGIN v2.0 - TỐI ƯU
+// =============================================================================
+// Nguồn: https://phimapi.com
+// Tối ưu cho OKMaterialTV / SmartTube
+// Thay đổi: Fix getUrlYears (hardcoded fallback), filter chéo, xử lý lỗi
+// =============================================================================
+
 // =============================================================================
 // CONFIGURATION & METADATA
 // =============================================================================
@@ -6,7 +15,7 @@ function getManifest() {
     return JSON.stringify({
         "id": "kkphim",
         "name": "KKPhim",
-        "version": "1.0.2",
+        "version": "2.0.0",
         "baseUrl": "https://phimapi.com",
         "iconUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/kkphim.png",
         "isEnabled": true,
@@ -16,15 +25,15 @@ function getManifest() {
 
 function getHomeSections() {
     return JSON.stringify([
-        { slug: 'phim-chieu-rap', title: 'Phim Chiếu Rạp', type: 'Horizontal', path: 'danh-sach' },
+        { slug: 'phim-moi-cap-nhat-v3', title: 'Phim Mới Cập Nhật', type: 'Grid', path: 'danh-sach' },
         { slug: 'phim-bo', title: 'Phim Bộ', type: 'Horizontal', path: 'danh-sach' },
         { slug: 'phim-le', title: 'Phim Lẻ', type: 'Horizontal', path: 'danh-sach' },
+        { slug: 'phim-chieu-rap', title: 'Phim Chiếu Rạp', type: 'Horizontal', path: 'danh-sach' },
         { slug: 'hoat-hinh', title: 'Hoạt Hình', type: 'Horizontal', path: 'danh-sach' },
         { slug: 'tv-shows', title: 'TV Shows', type: 'Horizontal', path: 'danh-sach' },
-        { slug: 'subteam', title: 'Subteam', type: 'Horizontal', path: 'danh-sach' },
         { slug: 'phim-thuyet-minh', title: 'Phim Thuyết Minh', type: 'Horizontal', path: 'danh-sach' },
         { slug: 'phim-long-tieng', title: 'Phim Lồng Tiếng', type: 'Horizontal', path: 'danh-sach' },
-        { slug: 'phim-moi-cap-nhat-v3', title: 'Phim Mới Cập Nhật', type: 'Grid', path: 'danh-sach' }
+        { slug: 'subteam', title: 'Subteam', type: 'Horizontal', path: 'danh-sach' }
     ]);
 }
 
@@ -54,80 +63,87 @@ function getFilterConfig() {
 }
 
 // =============================================================================
-// URL GENERATION
+// URL GENERATION - TỐI ƯU
 // =============================================================================
+
+var BASE_API = "https://phimapi.com";
+
+var LIST_SLUGS = [
+    'phim-vietsub', 'subteam', 'phim-thuyet-minh', 'phim-long-tieng',
+    'phim-bo', 'phim-le', 'hoat-hinh', 'tv-shows', 'phim-chieu-rap',
+    'phim-moi-cap-nhat', 'phim-moi-cap-nhat-v3'
+];
 
 function getUrlList(slug, filtersJson) {
     try {
         var filters = JSON.parse(filtersJson || "{}");
         var page = filters.page || 1;
-
-        // Slugs that belong to 'danh-sach'
-        var listSlugs = ['phim-vietsub', 'subteam', 'phim-thuyet-minh', 'phim-long-tieng', 'phim-bo', 'phim-le', 'hoat-hinh', 'tv-shows', 'phim-chieu-rap', 'phim-moi-cap-nhat'];
-        var basePath = listSlugs.indexOf(slug) !== -1 ? "danh-sach" : "the-loai";
+        var limit = filters.limit || 24;
 
         var typeList = slug;
-
-        // Special handling for legacy slug
         if (typeList === 'phim-moi') typeList = 'phim-moi-cap-nhat-v3';
 
-        // Special handling for 'phim-moi-cap-nhat-v3' which uses a different base URL structure
+        // Trường hợp đặc biệt
         if (slug === 'phim-moi-cap-nhat-v3' || typeList === 'phim-moi-cap-nhat-v3') {
-            return "https://phimapi.com/danh-sach/phim-moi-cap-nhat-v3?page=" + page;
+            var url = BASE_API + "/danh-sach/phim-moi-cap-nhat-v3?page=" + page + "&limit=" + limit;
+            if (filters.sort) url += "&sort_field=" + filters.sort;
+            return url;
         }
 
-        var url = "https://phimapi.com/v1/api/" + basePath + "/" + typeList + "?page=" + page;
+        // Xác định basePath theo filter
+        var basePath = LIST_SLUGS.indexOf(slug) !== -1 ? "danh-sach" : "the-loai";
+        if (filters.year) { basePath = "nam-phat-hanh"; typeList = filters.year; }
+        else if (filters.category) { basePath = "the-loai"; typeList = filters.category; }
+        else if (filters.country) { basePath = "quoc-gia"; typeList = filters.country; }
 
-        // Query Params (Common for all endpoints)
-        if (filters.limit) url += "&limit=" + filters.limit;
-        else url += "&limit=24"; // Default limit
+        var url = BASE_API + "/v1/api/" + basePath + "/" + typeList + "?page=" + page + "&limit=" + limit;
 
-        if (filters.country) url += "&country=" + filters.country;
-        if (filters.year) url += "&year=" + filters.year;
-        if (filters.category) url += "&category=" + filters.category;
-
+        // Filter chéo
+        if (filters.country && basePath !== "quoc-gia") url += "&country=" + filters.country;
+        if (filters.year && basePath !== "nam-phat-hanh") url += "&year=" + filters.year;
+        if (filters.category && basePath !== "the-loai") url += "&category=" + filters.category;
         if (filters.sort) url += "&sort_field=" + filters.sort;
 
         return url;
     } catch (e) {
-        return "https://phimapi.com/v1/api/danh-sach/" + slug;
+        return BASE_API + "/v1/api/danh-sach/phim-moi-cap-nhat-v3?page=1&limit=24";
     }
 }
 
 function getUrlSearch(keyword, filtersJson) {
-    var filters = JSON.parse(filtersJson || "{}");
-    var limit = filters.limit || 24;
-    return "https://phimapi.com/v1/api/tim-kiem?keyword=" + encodeURIComponent(keyword) + "&limit=" + limit;
+    try {
+        var filters = JSON.parse(filtersJson || "{}");
+        var limit = filters.limit || 24;
+        return BASE_API + "/v1/api/tim-kiem?keyword=" + encodeURIComponent(keyword) + "&limit=" + limit;
+    } catch (e) {
+        return BASE_API + "/v1/api/tim-kiem?keyword=" + encodeURIComponent(keyword) + "&limit=24";
+    }
 }
 
 function getUrlDetail(slug) {
-    return "https://phimapi.com/phim/" + slug;
+    return BASE_API + "/phim/" + slug;
 }
 
-function getUrlCategories() { return "https://phimapi.com/the-loai"; }
-function getUrlCountries() { return "https://phimapi.com/quoc-gia"; }
+function getUrlCategories() { return BASE_API + "/the-loai"; }
+function getUrlCountries() { return BASE_API + "/quoc-gia"; }
+
+/**
+ * FIX: KKPhim không có API danh sách năm riêng.
+ * Trả về hardcoded years thay vì empty string gây lỗi.
+ */
 function getUrlYears() {
-    // KKPhim doesn't seem to have a 'list years' API in the doc, but implies support (1970-now).
-    // We can return empty or a hardcoded generator if needed. 
-    // But the Kotlin generic logic expects a URL.
-    // User instruction: GET https://phimapi.com/v1/api/nam/{type_list}
-    // But how to get the LIST of years?
-    // User didn't provide "GET list years". Just "GET detailed year".
-    // I will return empty string to signal "No dynamic years list", 
-    // OR I can return a dummy API and parse it manually if I want to simulate it,
-    // but better to just let Kotlin handle fallback if connection fails. 
-    // Actually, I can construct a local JSON response if I implement a specific "local" parser?
-    // No, let's stick to API. 
-    // User provided: "Năm: GET https://phimapi.com/v1/api/nam/{type_list}"
-    // But didn't provide "GET all years".
-    // I will omit it for now or return a known valid one if found.
-    // Re-reading user prompt: "Năm phát hành của phim (1970 - hiện tại)."
-    // It's a range.
-    return "";
+    // Trả về URL giả, parseYearsResponse sẽ xử lý hardcoded
+    return BASE_API + "/nam-phat-hanh";
+}
+
+function getUrlEpisodePlayer(urlOrSlug) {
+    if (urlOrSlug && (urlOrSlug.indexOf("http") === 0 || urlOrSlug.indexOf("https") === 0))
+        return urlOrSlug;
+    return BASE_API + "/phim/" + urlOrSlug;
 }
 
 // =============================================================================
-// PARSERS
+// PARSERS - TỐI ƯU
 // =============================================================================
 
 function parseListResponse(apiResponseJson) {
@@ -136,21 +152,16 @@ function parseListResponse(apiResponseJson) {
         var data = response.data || {};
         var items = data.items || [];
 
-        // Handle KKPhim special structure where items might be in data directly if it's an array
-        if (Array.isArray(data)) {
-            items = data;
-        } else if (Array.isArray(response.items)) {
-            // Sometimes API returns root items
-            items = response.items;
-        }
+        if (Array.isArray(data)) items = data;
+        else if (Array.isArray(response.items)) items = response.items;
 
         var params = data.params || {};
         var pagination = response.pagination || params.pagination || {};
 
         var movies = items.map(function (item) {
             return {
-                id: item.slug,
-                title: item.name,
+                id: item.slug || "",
+                title: item.name || "",
                 posterUrl: getPosterUrl(item.poster_url),
                 backdropUrl: getPosterUrl(item.thumb_url),
                 year: item.year || 0,
@@ -160,17 +171,21 @@ function parseListResponse(apiResponseJson) {
             };
         });
 
+        var totalItems = pagination.totalItems || 0;
+        var itemsPerPage = pagination.totalItemsPerPage || 24;
+        var totalPages = itemsPerPage > 0 ? Math.ceil(totalItems / itemsPerPage) : 1;
+
         return JSON.stringify({
             items: movies,
             pagination: {
                 currentPage: pagination.currentPage || 1,
-                totalPages: Math.ceil((pagination.totalItems || 0) / (pagination.totalItemsPerPage || 24)),
-                totalItems: pagination.totalItems || 0,
-                itemsPerPage: pagination.totalItemsPerPage || 24
+                totalPages: totalPages,
+                totalItems: totalItems,
+                itemsPerPage: itemsPerPage
             }
         });
     } catch (error) {
-        return JSON.stringify({ items: [], pagination: { currentPage: 1, totalPages: 1 } });
+        return JSON.stringify({ items: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 24 } });
     }
 }
 
@@ -185,43 +200,43 @@ function parseMovieDetail(apiResponseJson) {
         var episodes = response.episodes || [];
 
         var servers = [];
-        episodes.forEach(function (server) {
-            var serverEpisodes = [];
-            if (server.server_data) {
-                server.server_data.forEach(function (ep) {
-                    serverEpisodes.push({
-                        id: ep.link_m3u8 || ep.link_embed, // Use m3u8 as ID
-                        name: ep.name,
-                        slug: ep.slug
+        if (Array.isArray(episodes)) {
+            episodes.forEach(function (server) {
+                var serverEpisodes = [];
+                if (server.server_data && Array.isArray(server.server_data)) {
+                    server.server_data.forEach(function (ep) {
+                        serverEpisodes.push({
+                            id: ep.link_m3u8 || ep.link_embed || "",
+                            name: ep.name || "",
+                            slug: ep.slug || ""
+                        });
                     });
-                });
-            }
-            if (serverEpisodes.length > 0) {
-                servers.push({ name: server.server_name, episodes: serverEpisodes });
-            }
-        });
+                }
+                if (serverEpisodes.length > 0) {
+                    servers.push({ name: server.server_name || "Server", episodes: serverEpisodes });
+                }
+            });
+        }
 
-        // Metadata extraction
         var categories = (movie.category || []).map(function (c) { return c.name; }).join(", ");
         var countries = (movie.country || []).map(function (c) { return c.name; }).join(", ");
         var directors = (movie.director || []).join(", ");
         var actors = (movie.actor || []).join(", ");
 
-        // Extract rating from tmdb
         var ratingValue = 0;
         var tmdbId = "";
         var tmdbSeason = 0;
         var tmdbType = "";
         if (movie.tmdb) {
             if (movie.tmdb.vote_average) ratingValue = movie.tmdb.vote_average;
-            if (movie.tmdb.id) tmdbId = movie.tmdb.id;
+            if (movie.tmdb.id) tmdbId = String(movie.tmdb.id);
             if (movie.tmdb.season) tmdbSeason = parseInt(movie.tmdb.season, 10);
             if (movie.tmdb.type) tmdbType = movie.tmdb.type;
         }
 
         return JSON.stringify({
-            id: movie.slug,
-            title: movie.name,
+            id: movie.slug || "",
+            title: movie.name || "",
             originName: movie.origin_name || "",
             posterUrl: getPosterUrl(movie.poster_url),
             backdropUrl: getPosterUrl(movie.thumb_url),
@@ -232,41 +247,54 @@ function parseMovieDetail(apiResponseJson) {
             duration: movie.time || "",
             servers: servers,
             episode_current: movie.episode_current || "",
+            episode_total: movie.episode_total || "",
             lang: movie.lang || "",
             category: categories,
             country: countries,
             director: directors,
             casts: actors,
             status: movie.status || "",
-            tmdbId: String(tmdbId),
+            tmdbId: tmdbId,
             tmdbSeason: tmdbSeason || 0,
             tmdbType: tmdbType || ""
         });
-    } catch (error) { return "null"; }
+    } catch (error) {
+        return "null";
+    }
 }
 
 function parseDetailResponse(apiResponseJson) {
+    try {
+        var response = JSON.parse(apiResponseJson);
+        var movie = response.movie || {};
+        var episodes = response.episodes || [];
 
-    // However, conforming to the interface:
-    return JSON.stringify({
-        url: "", // In this architecture, the episode ID *is* the URL, so this might be redundant or used for resolving.
-        // But since I don't see `episodeId` passed to `getStreamLink` in `MovieRepository` signature...
-        // Wait, `MovieRepository` signature IS `getStreamLink(movieSlug: String)`?
-        // That's weird. How does it know WHICH episode?
+        var streamUrl = "";
+        if (episodes.length > 0) {
+            var firstServer = episodes[0];
+            if (firstServer.server_data && firstServer.server_data.length > 0) {
+                streamUrl = firstServer.server_data[0].link_m3u8 || firstServer.server_data[0].link_embed || "";
+            }
+        }
 
-        // Checking `PlayerScreen.kt` or `VideoPlayerControls.kt` would clarify this but I'm in writing file mode.
-        // I'll assume for KKPhim, if I return empty URL here, the Player might use the episode ID passed to it?
-        // Actually, I'll return the raw response just in case.
-        headers: { "User-Agent": "Mozilla/5.0", "Referer": "https://phimapi.com" },
-        subtitles: []
-    });
+        return JSON.stringify({
+            url: streamUrl,
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Referer": "https://phimapi.com"
+            },
+            subtitles: []
+        });
+    } catch (error) {
+        return "{}";
+    }
 }
 
 function parseCategoriesResponse(apiResponseJson) {
     try {
         var response = JSON.parse(apiResponseJson);
         var items = response.data?.items || response.items || (Array.isArray(response) ? response : []);
-        return JSON.stringify(items.map(function (i) { return { name: i.name, slug: i.slug }; }));
+        return JSON.stringify(items.map(function (i) { return { name: i.name || "", slug: i.slug || "" }; }));
     } catch (e) { return "[]"; }
 }
 
@@ -274,17 +302,28 @@ function parseCountriesResponse(apiResponseJson) {
     try {
         var response = JSON.parse(apiResponseJson);
         var items = response.data?.items || response.items || (Array.isArray(response) ? response : []);
-        return JSON.stringify(items.map(function (i) { return { name: i.name, value: i.slug }; }));
+        return JSON.stringify(items.map(function (i) { return { name: i.name || "", value: i.slug || "" }; }));
     } catch (e) { return "[]"; }
 }
 
+/**
+ * FIX: Trả về hardcoded years vì KKPhim không có API years riêng.
+ */
 function parseYearsResponse(apiResponseJson) {
-    // If I returned "" for getUrlYears, this won't be called.
-    return "[]";
+    var currentYear = new Date().getFullYear();
+    var years = [];
+    for (var y = currentYear; y >= 1970; y--) {
+        years.push({ name: String(y), value: String(y) });
+    }
+    return JSON.stringify(years);
 }
+
+// =============================================================================
+// HELPERS
+// =============================================================================
 
 function getPosterUrl(path) {
     if (!path) return "";
-    if (path.indexOf("http") === 0) return path;
+    if (path.indexOf("http") === 0 || path.indexOf("https") === 0) return path;
     return "https://phimimg.com/" + path;
 }
